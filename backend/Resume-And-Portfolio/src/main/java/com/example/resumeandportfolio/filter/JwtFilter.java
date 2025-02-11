@@ -10,7 +10,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.PrintWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,32 +31,30 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
         FilterChain filterChain) throws ServletException, IOException {
-        String accessToken = request.getHeader("access"); // 헤더에서 access키에 담긴 토큰을 꺼냄
+        // Authorization 헤더에서 Access Token 추출
+        String authorizationHeader = request.getHeader("Authorization");
 
-        // 토큰이 없다면 다음 필터로 넘김
-        if (accessToken == null) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 토큰 만료 여부 확인, 만료시 다음 필터로 넘기지 않음
+        // 헤더에서 access키에 담긴 토큰을 꺼냄
+        String accessToken = authorizationHeader.replace("Bearer ", "");
+
+        // 토큰 만료 여부 확인
         try {
             jwtUtil.isExpired(accessToken);
         } catch (ExpiredJwtException e) {
-            PrintWriter writer = response.getWriter();
-            writer.print("access token expired");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Access token expired");
             return;
         }
 
-        // 토큰이 access인지 확인 (발급시 페이로드에 명시)
-        String category = jwtUtil.getCategory(accessToken);
-
-        if (!category.equals("access")) {
-            PrintWriter writer = response.getWriter();
-            writer.print("invalid access token");
-
+        // Access Token 유효성 확인
+        if (!"access".equals(jwtUtil.getCategory(accessToken))) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid access token");
             return;
         }
 

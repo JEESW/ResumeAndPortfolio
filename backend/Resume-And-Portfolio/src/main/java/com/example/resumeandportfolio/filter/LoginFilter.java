@@ -4,7 +4,6 @@ import com.example.resumeandportfolio.model.entity.user.CustomUserDetails;
 import com.example.resumeandportfolio.service.user.RefreshTokenService;
 import com.example.resumeandportfolio.util.jwt.JwtUtil;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -58,8 +57,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         refreshTokenService.saveRefreshToken(customUserDetails.getUsername(), refresh, 86400L);
 
-        response.setHeader("access", access);
-        response.addCookie(createCookie("refresh", refresh));
+        response.setHeader("Authorization", "Bearer " + access);
         response.setStatus(HttpStatus.OK.value());
     }
 
@@ -71,14 +69,5 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         response.setStatus(401);
         response.getWriter().write("{\"error\":\"Invalid username or password\"}");
         response.getWriter().flush();
-    }
-
-    // 쿠키 생성 메서드
-    private Cookie createCookie(String key, String value) {
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24*60*60);
-        cookie.setHttpOnly(true);
-
-        return cookie;
     }
 }

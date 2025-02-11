@@ -14,7 +14,6 @@ import com.example.resumeandportfolio.model.dto.user.UserUpdateResponse;
 import com.example.resumeandportfolio.service.user.RefreshTokenService;
 import com.example.resumeandportfolio.service.user.UserService;
 import com.example.resumeandportfolio.util.jwt.JwtUtil;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -71,7 +70,6 @@ public class UserController {
         refreshTokenService.saveRefreshToken(loginResponse.email(), refreshToken, 86400L);
 
         response.setHeader("Authorization", "Bearer " + accessToken);
-        response.addCookie(createCookie("refresh", refreshToken));
 
         return ResponseEntity.ok(loginResponse);
     }
@@ -109,8 +107,7 @@ public class UserController {
     // 회원 수정 API
     @PutMapping("/update")
     public ResponseEntity<UserUpdateResponse> updateUser(
-        @Valid @RequestBody UserUpdateRequest request,
-        HttpServletRequest httpServletRequest
+        @Valid @RequestBody UserUpdateRequest request
     ) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
@@ -131,8 +128,9 @@ public class UserController {
 
         String email = authentication.getName();
 
+        // 사용자 삭제 및 Refresh Token 삭제
         userService.deleteUser(email);
-        refreshTokenService.deleteRefreshToken(email); // Redis에서 Refresh 토큰 삭제
+        refreshTokenService.deleteRefreshToken(email);
 
         return ResponseEntity.ok("회원 탈퇴가 완료되었습니다.");
     }
@@ -157,15 +155,5 @@ public class UserController {
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_JSON)
             .body("비밀번호가 성공적으로 변경되었습니다.");
-    }
-
-    // 쿠키 생성 메서드
-    private Cookie createCookie(String key, String value) {
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24 * 60 * 60);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-
-        return cookie;
     }
 }
