@@ -21,7 +21,7 @@ function App() {
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/faq" element={<Faq />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/oauth2/callback" element={<OAuthRedirectHandler />} />
+            <Route path="/api/users/oauth2/callback/google" element={<OAuthRedirectHandler />} />
             <Route path="/signup" element={<SignUp />} />
           </Routes>
         </main>
