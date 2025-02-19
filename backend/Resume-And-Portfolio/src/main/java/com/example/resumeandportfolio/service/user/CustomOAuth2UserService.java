@@ -45,12 +45,23 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // 첫 로그인 시 DB 등록
     private User registerUserIfNotExists(String email, String name) {
+        String uniqueNickname = generateUniqueNickname(name);
         return userRepository.findByEmailAndDeletedAtIsNull(email)
             .orElseGet(() -> userRepository.save(User.builder()
                 .email(email)
-                .nickname(name)
+                .nickname(uniqueNickname)
                 .password("")
                 .role(Role.VISITOR)
                 .build()));
+    }
+
+    // 닉네임 충돌 방지
+    private String generateUniqueNickname(String baseName) {
+        String uniqueNickname = baseName;
+        int suffix = 1;
+        while (userRepository.existsByNickname(uniqueNickname)) {
+            uniqueNickname = baseName + suffix++;
+        }
+        return uniqueNickname;
     }
 }
