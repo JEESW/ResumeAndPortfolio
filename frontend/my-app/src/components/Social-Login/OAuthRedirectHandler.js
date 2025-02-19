@@ -1,10 +1,10 @@
-// 예: React의 useEffect 훅을 사용해 처리
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function OAuthRedirectHandler() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -13,19 +13,25 @@ function OAuthRedirectHandler() {
     if (oneTimeCode) {
       // 백엔드로 oneTimeCode를 보내서 Access Token을 요청
       axios
-      .post("https://api.example.com/api/users/oauth2/token", null, {
-        params: { code: oneTimeCode }
-      })
-      .then(response => {
+      .post(
+          "https://www.jsw-resumeandportfolio.com/api/users/oauth2/token",
+          null,
+          {
+            params: { code: oneTimeCode },
+          }
+      )
+      .then((response) => {
         const accessToken = response.data.accessToken;
-        console.log("Access Token:", accessToken);
-        // Access Token을 로컬 스토리지 또는 상태에 저장
+        localStorage.setItem("accessToken", accessToken);
+        alert("로그인 성공!");
+        navigate("/");
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Failed to get token:", error);
+        alert("인증에 실패했습니다.");
       });
     }
-  }, [location]);
+  }, [location, navigate]);
 
   return <div>Loading...</div>;
 }

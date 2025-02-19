@@ -18,9 +18,6 @@ const Login = () => {
           {
             email,
             password,
-          },
-          {
-            withCredentials: true, // Refresh Token을 쿠키에 저장
           }
       );
 
