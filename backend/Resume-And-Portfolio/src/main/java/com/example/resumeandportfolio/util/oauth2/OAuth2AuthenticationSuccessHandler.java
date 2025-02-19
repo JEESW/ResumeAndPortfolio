@@ -37,7 +37,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         refreshTokenService.saveOneTimeCode(oneTimeCode, email, 300);
 
         // 클라이언트를 /login?code=oneTimeCode로 리다이렉트
-        String targetUrl = "https://www.jsw-resumeandportfolio.com/oauth/callback?code=" + oneTimeCode;
+        String targetUrl = "https://www.jsw-resumeandportfolio.com/oauth2/callback?code=" + oneTimeCode;
         response.sendRedirect(targetUrl);
     }
 }
