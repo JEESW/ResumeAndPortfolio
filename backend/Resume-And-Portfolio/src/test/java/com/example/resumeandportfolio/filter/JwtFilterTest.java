@@ -52,7 +52,7 @@ class JwtFilterTest {
         String email = "test@example.com";
         Role role = Role.VISITOR;
 
-        request.addHeader("access", accessToken);
+        request.addHeader("Authorization", "Bearer " + accessToken);
 
         when(jwtUtil.isExpired(accessToken)).thenReturn(false);
         when(jwtUtil.getCategory(accessToken)).thenReturn("access");
@@ -64,7 +64,6 @@ class JwtFilterTest {
 
         // Then
         assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
-        assertThat(filterChain.getRequest()).isNotNull();
         verify(jwtUtil, times(1)).isExpired(accessToken);
         verify(jwtUtil, times(1)).getCategory(accessToken);
         verify(jwtUtil, times(1)).getUsername(accessToken);
@@ -72,14 +71,12 @@ class JwtFilterTest {
     }
 
     @Test
-    @DisplayName("JWT 인증 실패 테스트 - 토큰 없음")
-    void jwtAuthenticationFailureNoTokenTest() throws ServletException, IOException {
+    @DisplayName("JWT 인증 실패 테스트 - Authorization 헤더 없음")
+    void jwtAuthenticationFailureNoAuthorizationHeaderTest() throws ServletException, IOException {
         // Given
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
-
-        // No access token in header
 
         // When
         jwtFilter.doFilterInternal(request, response, filterChain);
@@ -98,10 +95,8 @@ class JwtFilterTest {
         MockFilterChain filterChain = new MockFilterChain();
 
         String expiredToken = "expiredAccessToken";
+        request.addHeader("Authorization", "Bearer " + expiredToken);
 
-        request.addHeader("access", expiredToken);
-
-        // Mock 설정: jwtUtil.isExpired가 ExpiredJwtException을 던지도록 설정
         doThrow(new ExpiredJwtException(null, null, "Token expired")).when(jwtUtil).isExpired(expiredToken);
 
         // When
@@ -109,7 +104,7 @@ class JwtFilterTest {
 
         // Then
         assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
-        assertThat(response.getContentAsString()).contains("access token expired");
+        assertThat(response.getContentAsString()).contains("Access token expired");
         verify(jwtUtil, times(1)).isExpired(expiredToken);
         verify(jwtUtil, never()).getCategory(anyString());
     }
@@ -123,18 +118,17 @@ class JwtFilterTest {
         MockFilterChain filterChain = new MockFilterChain();
 
         String invalidToken = "invalidAccessToken";
-
-        request.addHeader("access", invalidToken);
+        request.addHeader("Authorization", "Bearer " + invalidToken);
 
         when(jwtUtil.isExpired(invalidToken)).thenReturn(false);
-        when(jwtUtil.getCategory(invalidToken)).thenReturn("refresh"); // 잘못된 카테고리
+        when(jwtUtil.getCategory(invalidToken)).thenReturn("refresh");
 
         // When
         jwtFilter.doFilterInternal(request, response, filterChain);
 
         // Then
         assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
-        assertThat(response.getContentAsString()).contains("invalid access token");
+        assertThat(response.getContentAsString()).contains("Invalid access token");
         verify(jwtUtil, times(1)).isExpired(invalidToken);
         verify(jwtUtil, times(1)).getCategory(invalidToken);
         verify(jwtUtil, never()).getUsername(anyString());

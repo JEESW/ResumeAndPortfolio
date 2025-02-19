@@ -7,7 +7,7 @@ import Resume from "./pages/Resume";
 import Portfolio from "./pages/Portfolio";
 import Faq from "./pages/Faq";
 import Login from "./pages/Login"
-import Success from "./components/Social-Login/Success";
+import OAuthRedirectHandler from "./components/Social-Login/OAuthRedirectHandler";
 import SignUp from "./pages/SignUp";
 
 function App() {
@@ -21,7 +21,7 @@ function App() {
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/faq" element={<Faq />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/social-login/success" element={<Success />} />
+            <Route path="/oauth/login" element={<OAuthRedirectHandler />} />
             <Route path="/signup" element={<SignUp />} />
           </Routes>
         </main>

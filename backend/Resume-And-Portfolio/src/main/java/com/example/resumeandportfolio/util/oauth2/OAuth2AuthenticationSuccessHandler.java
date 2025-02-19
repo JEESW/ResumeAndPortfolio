@@ -1,11 +1,10 @@
 package com.example.resumeandportfolio.util.oauth2;
 
 import com.example.resumeandportfolio.service.user.RefreshTokenService;
-import com.example.resumeandportfolio.util.jwt.JwtUtil;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
 
     @Override
@@ -32,27 +30,14 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
 
-        // JWT 생성
-        String accessToken = jwtUtil.createJwt("access", email, "ROLE_VISITOR", 600000L);
-        String refreshToken = jwtUtil.createJwt("refresh", email, "ROLE_VISITOR", 86400000L);
+        // One-Time Code 생성
+        String oneTimeCode = UUID.randomUUID().toString();
 
-        // Redis에 Refresh Token 저장
-        refreshTokenService.saveRefreshToken(email, refreshToken, 86400L);
+        // One-Time Code Redis에 저장
+        refreshTokenService.saveOneTimeCode(oneTimeCode, email, 300);
 
-        // 쿠키로 Access Token과 Refresh Token 전달
-        response.addCookie(createCookie("access", accessToken));
-        response.addCookie(createCookie("refresh", refreshToken));
-
-        response.sendRedirect("https://www.jsw-resumeandportfolio.com/social-login/success");
-    }
-
-    private Cookie createCookie(String key, String value) {
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24 * 60 * 60);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-
-        return cookie;
+        // 클라이언트를 /login?code=oneTimeCode로 리다이렉트
+        String targetUrl = "https://www.jsw-resumeandportfolio.com/oauth/login?code=" + oneTimeCode;
+        response.sendRedirect(targetUrl);
     }
 }

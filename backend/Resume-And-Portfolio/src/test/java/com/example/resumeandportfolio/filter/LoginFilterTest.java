@@ -72,18 +72,14 @@ class LoginFilterTest {
                 .build()
         );
 
-        Authentication authToken = new UsernamePasswordAuthenticationToken(userDetails, null,
-            userDetails.getAuthorities());
+        Authentication authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         when(authenticationManager.authenticate(any())).thenReturn(authToken);
 
         String accessToken = "accessToken";
         String refreshToken = "refreshToken";
 
-        when(jwtUtil.createJwt("access", "test@example.com", "ROLE_VISITOR", 600000L)).thenReturn(
-            accessToken);
-        when(
-            jwtUtil.createJwt("refresh", "test@example.com", "ROLE_VISITOR", 86400000L)).thenReturn(
-            refreshToken);
+        when(jwtUtil.createJwt("access", "test@example.com", "ROLE_VISITOR", 600000L)).thenReturn(accessToken);
+        when(jwtUtil.createJwt("refresh", "test@example.com", "ROLE_VISITOR", 86400000L)).thenReturn(refreshToken);
 
         // When
         loginFilter.attemptAuthentication(request, response);
@@ -91,12 +87,8 @@ class LoginFilterTest {
 
         // Then
         assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
-        assertThat(response.getHeader("access")).isEqualTo(accessToken);
-        assertThat(response.getCookies()).anyMatch(
-            cookie -> "refresh".equals(cookie.getName()) && refreshToken.equals(cookie.getValue()));
-
-        verify(refreshTokenService, times(1)).saveRefreshToken("test@example.com", refreshToken,
-            86400L);
+        assertThat(response.getHeader("Authorization")).isEqualTo("Bearer " + accessToken);
+        verify(refreshTokenService, times(1)).saveRefreshToken("test@example.com", refreshToken, 86400L);
     }
 
     @Test
@@ -109,7 +101,6 @@ class LoginFilterTest {
         request.setParameter("username", "test@example.com");
         request.setParameter("password", "wrongPassword");
 
-        // AuthenticationManager에서 BadCredentialsException을 던지도록 설정
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
             .thenThrow(new BadCredentialsException("Invalid credentials"));
 
@@ -123,7 +114,6 @@ class LoginFilterTest {
         // Then
         assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
         assertThat(response.getContentAsString()).contains("Invalid username or password");
-
         verifyNoInteractions(jwtUtil, refreshTokenService);
     }
 
@@ -137,7 +127,6 @@ class LoginFilterTest {
         request.setParameter("username", "unknown@example.com");
         request.setParameter("password", "password123");
 
-        // AuthenticationManager에서 BadCredentialsException을 던지도록 설정
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
             .thenThrow(new BadCredentialsException("Authentication failed"));
 
@@ -151,7 +140,6 @@ class LoginFilterTest {
         // Then
         assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
         assertThat(response.getContentAsString()).contains("Invalid username or password");
-
         verifyNoInteractions(jwtUtil, refreshTokenService);
     }
 }

@@ -7,11 +7,11 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.GenericFilterBean;
 
 /**
@@ -40,58 +40,40 @@ public class CustomLogoutFilter extends GenericFilterBean {
         }
 
         String requestMethod = request.getMethod();
-        if (!requestMethod.equals("POST")) {
-            filterChain.doFilter(request, response);
+        if (!requestMethod.equalsIgnoreCase("POST")) {
+            response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
             return;
         }
 
-        String refresh = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("refresh")) {
-                    refresh = cookie.getValue();
-                }
-            }
-        }
-
-
-        if (refresh == null) {
+        // Authorization 헤더에서 Access Token 추출
+        String authorizationHeader = request.getHeader("Authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("Access token not found");
             return;
         }
+        String accessToken = authorizationHeader.replace("Bearer ", "");
 
+        // JWT에서 사용자 이메일 추출
+        String email;
         try {
-            jwtUtil.isExpired(refresh);
+            email = jwtUtil.getUsername(accessToken);
         } catch (ExpiredJwtException e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Access token expired");
             return;
         }
 
-        // 토큰이 refresh인지 확인
-        String category = jwtUtil.getCategory(refresh);
-        if (!category.equals("refresh")) {
+        // Redis에서 Refresh Token 삭제
+        String storedToken = refreshTokenService.getRefreshToken(email);
+        if (storedToken == null) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("Refresh token not found");
             return;
         }
 
-        // Redis에서 토큰 검증
-        String username = jwtUtil.getUsername(refresh);
-        String storedToken = refreshTokenService.getRefreshToken(username);
-        if (storedToken == null || !storedToken.equals(refresh)) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
-
-        refreshTokenService.deleteRefreshToken(username);
-
-        // Refresh 토큰 Cookie 값 0
-        Cookie cookie = new Cookie("refresh", null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        cookie.setSecure(true);
-
-        response.addCookie(cookie);
+        refreshTokenService.deleteRefreshToken(email);
         response.setStatus(HttpServletResponse.SC_OK);
+        response.getWriter().write("Logout successful");
     }
 }
