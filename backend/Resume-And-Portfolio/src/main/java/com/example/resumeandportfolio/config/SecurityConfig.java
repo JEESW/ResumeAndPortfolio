@@ -74,7 +74,7 @@ public class SecurityConfig {
                     authorization.baseUri("/api/users/oauth2/authorization")
                 )
                 .redirectionEndpoint(redirection ->
-                    redirection.baseUri("/oauth2/callback/*")
+                    redirection.baseUri("/api/users/oauth2/callback/*")
                 )
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 .successHandler(oAuth2AuthenticationSuccessHandler)
