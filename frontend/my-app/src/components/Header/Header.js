@@ -58,8 +58,26 @@ const Header = () => {
   // 로그아웃 핸들러
   const handleLogout = async () => {
     try {
-      await axios.post("https://www.jsw-resumeandportfolio.com/api/users/logout");
-      localStorage.removeItem("accessToken"); // 로컬 스토리지에서 토큰 삭제
+      const token = localStorage.getItem("accessToken");
+
+      if (!token) {
+        console.error("No access token found");
+        alert("로그인 상태가 아닙니다.");
+        return;
+      }
+
+      await axios.post(
+          "https://www.jsw-resumeandportfolio.com/api/users/logout",
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+      );
+
+      localStorage.removeItem("accessToken"); // 토큰 삭제
       setIsLoggedIn(false);
       navigate("/");
     } catch (err) {
