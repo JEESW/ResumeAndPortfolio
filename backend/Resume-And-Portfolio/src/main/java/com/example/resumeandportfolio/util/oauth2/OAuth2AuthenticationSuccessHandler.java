@@ -36,8 +36,8 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         // One-Time Code Redis에 저장
         refreshTokenService.saveOneTimeCode(oneTimeCode, email, 300);
 
-        // 클라이언트를 /oauth2/callback/google?code=oneTimeCode로 리다이렉트
-        String targetUrl = "https://www.jsw-resumeandportfolio.com/api/users/oauth2/callback/google?code=" + oneTimeCode;
+        // 클라이언트를 /oauth2/callback?code=oneTimeCode로 리다이렉트
+        String targetUrl = "https://www.jsw-resumeandportfolio.com/oauth2/callback?code=" + oneTimeCode;
         response.sendRedirect(targetUrl);
     }
 }
