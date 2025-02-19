@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, {useEffect} from "react";
+import {useLocation, useNavigate} from "react-router-dom";
 import axios from "axios";
 
 function OAuthRedirectHandler() {
@@ -15,10 +15,7 @@ function OAuthRedirectHandler() {
       axios
       .post(
           "https://www.jsw-resumeandportfolio.com/api/users/oauth2/token",
-          null,
-          {
-            params: { code: oneTimeCode },
-          }
+          {code: oneTimeCode}
       )
       .then((response) => {
         const accessToken = response.data.accessToken;
