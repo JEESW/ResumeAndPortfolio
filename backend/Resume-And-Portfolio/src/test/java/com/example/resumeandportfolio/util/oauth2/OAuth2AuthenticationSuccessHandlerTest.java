@@ -65,7 +65,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
         // Then
         verify(refreshTokenService, times(1)).saveOneTimeCode(anyString(), eq(email), eq(300L));
         verify(response, times(1)).sendRedirect(argThat(url ->
-            url.startsWith("https://www.jsw-resumeandportfolio.com/api/users/oauth2/callback?code=")
+            url.startsWith("https://www.jsw-resumeandportfolio.com/oauth2/callback?code=")
         ));
     }
 }
