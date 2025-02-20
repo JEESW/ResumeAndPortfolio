@@ -1,5 +1,5 @@
-import React, {useEffect} from "react";
-import {useLocation, useNavigate} from "react-router-dom";
+import React, { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function OAuthRedirectHandler() {
@@ -14,8 +14,7 @@ function OAuthRedirectHandler() {
       // 백엔드로 oneTimeCode를 보내서 Access Token을 요청
       axios
       .post(
-          "https://www.jsw-resumeandportfolio.com/api/users/oauth2/token",
-          {code: oneTimeCode}
+          `https://www.jsw-resumeandportfolio.com/api/users/oauth2/token?code=${oneTimeCode}`
       )
       .then((response) => {
         const accessToken = response.data.accessToken;
