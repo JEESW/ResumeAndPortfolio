@@ -15,7 +15,7 @@ const Header = () => {
     if (token) {
       validateToken(token); // Access Token 검증 및 필요 시 재발급
     }
-  }, []);
+  }, [isLoggedIn]); // isLoggedIn이 변경될 때마다 실행됨
 
   // Access Token 검증 및 재발급 처리
   const validateToken = async (token) => {
@@ -28,7 +28,12 @@ const Header = () => {
           const reissueResponse = await axios.post(
               "https://www.jsw-resumeandportfolio.com/api/users/reissue"
           );
-          const newAccessToken = reissueResponse.headers["authorization"];
+          let newAccessToken = reissueResponse.headers["authorization"];
+
+          if (newAccessToken && !newAccessToken.startsWith("Bearer ")) {
+            newAccessToken = `Bearer ${newAccessToken}`;
+          }
+
           localStorage.setItem("accessToken", newAccessToken); // 새로운 Access Token 저장
           await fetchUserInfo(newAccessToken); // 새로운 토큰으로 사용자 정보 재조회
         } catch (reissueError) {
@@ -43,11 +48,14 @@ const Header = () => {
 
   // 사용자 정보 조회
   const fetchUserInfo = async (token) => {
+    let formattedToken = token.startsWith("Bearer ") ? token.split(" ")[1]
+        : token;
+
     const response = await axios.get(
         "https://www.jsw-resumeandportfolio.com/api/users/me",
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Access Token을 헤더에 추가
+            Authorization: `Bearer ${formattedToken}`, // Access Token을 헤더에 추가
           },
         }
     );

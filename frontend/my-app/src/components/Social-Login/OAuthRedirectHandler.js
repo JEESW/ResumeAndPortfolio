@@ -17,10 +17,15 @@ function OAuthRedirectHandler() {
           `https://www.jsw-resumeandportfolio.com/api/users/oauth2/token?code=${oneTimeCode}`
       )
       .then((response) => {
-        const accessToken = response.data.accessToken;
-        localStorage.setItem("accessToken", `Bearer ${accessToken}`);
+        let accessToken = response.data.accessToken;
+
+        if (!accessToken.startsWith("Bearer ")) {
+          accessToken = `Bearer ${accessToken}`;
+        }
+
+        localStorage.setItem("accessToken", accessToken);
         alert("로그인 성공!");
-        navigate("/");
+        window.location.reload();
       })
       .catch((error) => {
         console.error("Failed to get token:", error);
