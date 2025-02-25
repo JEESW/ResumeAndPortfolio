@@ -18,7 +18,7 @@ function OAuthRedirectHandler() {
       )
       .then((response) => {
         const accessToken = response.data.accessToken;
-        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("accessToken", `Bearer ${accessToken}`);
         alert("로그인 성공!");
         navigate("/");
       })
