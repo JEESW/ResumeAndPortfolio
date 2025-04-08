@@ -68,18 +68,22 @@ class LoginFilterTest {
             User.builder()
                 .email("test@example.com")
                 .password("encoded_password")
+                .nickname("test")
                 .role(Role.VISITOR)
                 .build()
         );
 
-        Authentication authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        Authentication authToken = new UsernamePasswordAuthenticationToken(userDetails, null,
+            userDetails.getAuthorities());
         when(authenticationManager.authenticate(any())).thenReturn(authToken);
 
         String accessToken = "accessToken";
         String refreshToken = "refreshToken";
 
-        when(jwtUtil.createJwt("access", "test@example.com", "ROLE_VISITOR", 600000L)).thenReturn(accessToken);
-        when(jwtUtil.createJwt("refresh", "test@example.com", "ROLE_VISITOR", 86400000L)).thenReturn(refreshToken);
+        when(jwtUtil.createJwt("access", "test@example.com", "ROLE_VISITOR", "test",
+            600000L)).thenReturn(accessToken);
+        when(jwtUtil.createJwt("refresh", "test@example.com", "ROLE_VISITOR", "test",
+            86400000L)).thenReturn(refreshToken);
 
         // When
         loginFilter.attemptAuthentication(request, response);
@@ -88,7 +92,8 @@ class LoginFilterTest {
         // Then
         assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
         assertThat(response.getHeader("Authorization")).isEqualTo("Bearer " + accessToken);
-        verify(refreshTokenService, times(1)).saveRefreshToken("test@example.com", refreshToken, 86400L);
+        verify(refreshTokenService, times(1)).saveRefreshToken("test@example.com", refreshToken,
+            86400L);
     }
 
     @Test

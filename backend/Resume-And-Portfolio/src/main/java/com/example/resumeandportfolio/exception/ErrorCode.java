@@ -24,6 +24,7 @@ public enum ErrorCode {
     REDIS_SAVE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "REDIS_SAVE_ERROR", "Redis 저장 중 오류가 발생했습니다."),
     INVALID_TOKEN(HttpStatus.BAD_REQUEST, "INVALID_TOKEN", "유효하지 않은 토큰입니다."),
     TOKEN_EXPIRED(HttpStatus.GONE, "TOKEN_EXPIRED", "토큰이 만료되었습니다."),
+    ILLEGAL_REGISTRATION_ID(HttpStatus.NOT_FOUND, "ILLEGAL_REGISTRATION_ID", "해당 계정을 찾을 수 없습니다."),
     REDIS_PARSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "REDIS_PARSE_ERROR", "Redis 데이터 처리 중 오류가 발생했습니다.");
 
     private final HttpStatus status;  // HTTP 상태 코드

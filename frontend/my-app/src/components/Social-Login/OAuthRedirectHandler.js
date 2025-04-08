@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, {useEffect} from "react";
+import {useLocation, useNavigate} from "react-router-dom";
 import axios from "axios";
 
 function OAuthRedirectHandler() {
@@ -14,18 +14,21 @@ function OAuthRedirectHandler() {
       // 백엔드로 oneTimeCode를 보내서 Access Token을 요청
       axios
       .post(
-          `https://www.jsw-resumeandportfolio.com/api/users/oauth2/token?code=${oneTimeCode}`
+          `https://www.jsw-resumeandportfolio.com/api/users/oauth2/token?code=${oneTimeCode}`,
+          {},
+          {validateStatus: () => true}
       )
       .then((response) => {
-        let accessToken = response.data.accessToken;
+        const authHeader = response.headers["authorization"];
 
-        if (!accessToken.startsWith("Bearer ")) {
-          accessToken = `Bearer ${accessToken}`;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          throw new Error("토큰이 없거나 형식이 잘못됨");
         }
 
+        const accessToken = authHeader.replace("Bearer ", "");
         localStorage.setItem("accessToken", accessToken);
         alert("로그인 성공!");
-        window.location.reload();
+        navigate("/");
       })
       .catch((error) => {
         console.error("Failed to get token:", error);
@@ -34,7 +37,7 @@ function OAuthRedirectHandler() {
     }
   }, [location, navigate]);
 
-  return <div>Loading...</div>;
+  return <div>로그인 처리 중입니다...</div>;
 }
 
 export default OAuthRedirectHandler;

@@ -1,6 +1,7 @@
-package com.example.resumeandportfolio.util.oauth2;
+package com.example.resumeandportfolio.util.oauth;
 
 import com.example.resumeandportfolio.service.user.RefreshTokenService;
+import com.example.resumeandportfolio.util.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -24,20 +25,20 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     private final RefreshTokenService refreshTokenService;
 
+    private static final String REDIRECT_URL = "https://www.jsw-resumeandportfolio.com/oauth2/callback";
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
         Authentication authentication) throws IOException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        String email = oAuth2User.getAttribute("email");
+        String username = oAuth2User.getAttribute("email");
 
-        // One-Time Code 생성
+        // One-Time Code 생성 및 Redis 저장 (5분 유효)
         String oneTimeCode = UUID.randomUUID().toString();
+        refreshTokenService.saveOneTimeCode(oneTimeCode, username, 300);
 
-        // One-Time Code Redis에 저장
-        refreshTokenService.saveOneTimeCode(oneTimeCode, email, 300);
-
-        // 클라이언트를 /oauth2/callback?code=oneTimeCode로 리다이렉트
-        String targetUrl = "https://www.jsw-resumeandportfolio.com/oauth2/callback?code=" + oneTimeCode;
+        // 클라이언트를 프론트엔드 콜백 URL로 리디렉트, code 포함
+        String targetUrl = REDIRECT_URL + "?code=" + oneTimeCode;
         response.sendRedirect(targetUrl);
     }
 }
