@@ -3,10 +3,10 @@ package com.example.resumeandportfolio.config;
 import com.example.resumeandportfolio.filter.CustomLogoutFilter;
 import com.example.resumeandportfolio.filter.JwtFilter;
 import com.example.resumeandportfolio.filter.LoginFilter;
-import com.example.resumeandportfolio.service.user.CustomOAuth2UserService;
+import com.example.resumeandportfolio.service.user.oauth.CustomOAuth2UserService;
 import com.example.resumeandportfolio.service.user.RefreshTokenService;
 import com.example.resumeandportfolio.util.jwt.JwtUtil;
-import com.example.resumeandportfolio.util.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.example.resumeandportfolio.util.oauth.OAuth2AuthenticationSuccessHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -46,7 +47,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(new CorsConfigurationSource() {
                 @Override
                 public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
@@ -89,7 +90,7 @@ public class SecurityConfig {
                 .permitAll()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(new JwtFilter(jwtUtil), LoginFilter.class)
+            .addFilterBefore(new JwtFilter(jwtUtil, refreshTokenService), LoginFilter.class)
             .addFilterAt(
                 new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil,
                     refreshTokenService),

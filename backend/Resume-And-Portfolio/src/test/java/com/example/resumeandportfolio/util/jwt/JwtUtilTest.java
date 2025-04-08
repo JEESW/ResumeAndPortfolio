@@ -33,10 +33,11 @@ class JwtUtilTest {
         String category = "access";
         String username = "test@example.com";
         String role = "ROLE_VISITOR";
+        String nickname = "test";
         long expiredMs = 60000L; // 1 minute
 
         // When
-        String token = jwtUtil.createJwt(category, username, role, expiredMs);
+        String token = jwtUtil.createJwt(category, username, role, nickname, expiredMs);
 
         // Then
         assertThat(token).isNotNull();
@@ -49,8 +50,9 @@ class JwtUtilTest {
         String category = "access";
         String username = "test@example.com";
         String role = "ROLE_VISITOR";
+        String nickname = "test";
         long expiredMs = 60000L; // 1 minute
-        String token = jwtUtil.createJwt(category, username, role, expiredMs);
+        String token = jwtUtil.createJwt(category, username, role, nickname, expiredMs);
 
         // When
         String parsedCategory = jwtUtil.getCategory(token);
@@ -67,7 +69,8 @@ class JwtUtilTest {
     @DisplayName("JWT 만료 확인 테스트 - 유효한 토큰")
     void isNotExpiredTest() {
         // Given
-        String token = jwtUtil.createJwt("access", "test@example.com", "ROLE_VISITOR", 60000L);
+        String token = jwtUtil.createJwt("access", "test@example.com", "ROLE_VISITOR", "test",
+            60000L);
 
         // When
         boolean isExpired = jwtUtil.isExpired(token);
@@ -80,7 +83,8 @@ class JwtUtilTest {
     @DisplayName("JWT 만료 확인 테스트 - 만료된 토큰")
     void isExpiredTest() throws InterruptedException {
         // Given
-        String token = jwtUtil.createJwt("access", "test@example.com", "ROLE_VISITOR", 1000L);
+        String token = jwtUtil.createJwt("access", "test@example.com", "ROLE_VISITOR", "test",
+            1000L);
 
         Thread.sleep(2000L);
 

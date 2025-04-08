@@ -62,9 +62,9 @@ public class UserController {
         UserLoginResponse loginResponse = userService.login(request.email(), request.password());
 
         String accessToken = jwtUtil.createJwt("access", loginResponse.email(),
-            loginResponse.role().name(), 600000L);
+            loginResponse.role().name(), loginResponse.nickname(), 600000L);
         String refreshToken = jwtUtil.createJwt("refresh", loginResponse.email(),
-            loginResponse.role().name(), 86400000L);
+            loginResponse.role().name(), loginResponse.nickname(), 86400000L);
 
         // Redis에 Refresh 토큰 저장
         refreshTokenService.saveRefreshToken(loginResponse.email(), refreshToken, 86400L);

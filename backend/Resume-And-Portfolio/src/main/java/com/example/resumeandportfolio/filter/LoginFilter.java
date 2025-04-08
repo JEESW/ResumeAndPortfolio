@@ -51,9 +51,11 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         HttpServletResponse response, FilterChain chain, Authentication authentication) {
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         String access = jwtUtil.createJwt("access", customUserDetails.getUsername(),
-            customUserDetails.getAuthorities().iterator().next().getAuthority(), 600000L);
+            customUserDetails.getAuthorities().iterator().next().getAuthority(),
+            customUserDetails.getNickname(), 600000L);
         String refresh = jwtUtil.createJwt("refresh", customUserDetails.getUsername(),
-            customUserDetails.getAuthorities().iterator().next().getAuthority(), 86400000L);
+            customUserDetails.getAuthorities().iterator().next().getAuthority(),
+            customUserDetails.getNickname(), 86400000L);
 
         refreshTokenService.saveRefreshToken(customUserDetails.getUsername(), refresh, 86400L);
 

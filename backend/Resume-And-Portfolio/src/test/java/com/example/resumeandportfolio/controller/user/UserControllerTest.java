@@ -80,7 +80,8 @@ public class UserControllerTest {
             Role.valueOf("VISITOR"));
 
         when(userService.login(request.email(), request.password())).thenReturn(response);
-        when(jwtUtil.createJwt(anyString(), anyString(), anyString(), anyLong())).thenReturn(
+        when(jwtUtil.createJwt(anyString(), anyString(), anyString(), anyString(),
+            anyLong())).thenReturn(
             "dummyAccessToken", "dummyRefreshToken");
 
         // When & Then
@@ -270,12 +271,15 @@ public class UserControllerTest {
     @DisplayName("회원 수정 성공 테스트")
     void updateUserSuccessTest() throws Exception {
         // Given
-        UserUpdateRequest request = new UserUpdateRequest("new_nickname", "current_password", "new_password123");
-        UserUpdateResponse response = new UserUpdateResponse(1L, "test@example.com", "new_nickname", Role.VISITOR);
+        UserUpdateRequest request = new UserUpdateRequest("new_nickname", "current_password",
+            "new_password123");
+        UserUpdateResponse response = new UserUpdateResponse(1L, "test@example.com", "new_nickname",
+            Role.VISITOR);
 
         mockSecurityContext("test@example.com");
 
-        when(userService.updateUser(anyString(), any(UserUpdateRequest.class))).thenReturn(response);
+        when(userService.updateUser(anyString(), any(UserUpdateRequest.class))).thenReturn(
+            response);
 
         // When & Then
         mockMvc.perform(put("/api/users/update")
@@ -288,7 +292,8 @@ public class UserControllerTest {
     @DisplayName("회원 수정 실패 테스트 - 사용자 없음")
     void updateUserFailureUserNotFoundTest() throws Exception {
         // Given
-        UserUpdateRequest request = new UserUpdateRequest("new_nickname", "current_password", "new_password123");
+        UserUpdateRequest request = new UserUpdateRequest("new_nickname", "current_password",
+            "new_password123");
 
         // SecurityContext 설정
         mockSecurityContext("test@example.com");
@@ -307,7 +312,8 @@ public class UserControllerTest {
     @DisplayName("회원 수정 실패 테스트 - 비밀번호 불일치")
     void updateUserFailureInvalidPasswordTest() throws Exception {
         // Given
-        UserUpdateRequest request = new UserUpdateRequest("new_nickname", "wrong_password", "new_password123");
+        UserUpdateRequest request = new UserUpdateRequest("new_nickname", "wrong_password",
+            "new_password123");
 
         // SecurityContext 설정
         mockSecurityContext("test@example.com");
@@ -375,7 +381,8 @@ public class UserControllerTest {
     void deleteUserFailureUserNotFoundTest() throws Exception {
         // Given
         mockSecurityContext("test@example.com");
-        doThrow(new CustomException(ErrorCode.USER_NOT_FOUND)).when(userService).deleteUser(anyString());
+        doThrow(new CustomException(ErrorCode.USER_NOT_FOUND)).when(userService)
+            .deleteUser(anyString());
 
         // When & Then
         mockMvc.perform(delete("/api/users/delete"))
@@ -389,7 +396,8 @@ public class UserControllerTest {
     void deleteUserFailureAlreadyDeletedTest() throws Exception {
         // Given
         mockSecurityContext("test@example.com");
-        doThrow(new CustomException(ErrorCode.USER_ALREADY_DELETED)).when(userService).deleteUser(anyString());
+        doThrow(new CustomException(ErrorCode.USER_ALREADY_DELETED)).when(userService)
+            .deleteUser(anyString());
 
         // When & Then
         mockMvc.perform(delete("/api/users/delete"))
@@ -436,7 +444,8 @@ public class UserControllerTest {
     @DisplayName("비밀번호 재설정 확인 성공 테스트")
     void confirmPasswordResetSuccessTest() throws Exception {
         // Given
-        PasswordResetConfirmDto request = new PasswordResetConfirmDto("validToken", "new_password123");
+        PasswordResetConfirmDto request = new PasswordResetConfirmDto("validToken",
+            "new_password123");
 
         // When & Then
         mockMvc.perform(post("/api/users/reset-password/confirm")
@@ -452,7 +461,8 @@ public class UserControllerTest {
     @DisplayName("비밀번호 재설정 확인 실패 테스트 - 토큰 만료")
     void confirmPasswordResetFailureTokenExpiredTest() throws Exception {
         // Given
-        PasswordResetConfirmDto request = new PasswordResetConfirmDto("expiredToken", "new_password123");
+        PasswordResetConfirmDto request = new PasswordResetConfirmDto("expiredToken",
+            "new_password123");
 
         doThrow(new CustomException(ErrorCode.TOKEN_EXPIRED))
             .when(userService).confirmPasswordReset(any(PasswordResetConfirmDto.class));
@@ -470,7 +480,8 @@ public class UserControllerTest {
     @DisplayName("비밀번호 재설정 확인 실패 테스트 - 잘못된 토큰")
     void confirmPasswordResetFailureInvalidTokenTest() throws Exception {
         // Given
-        PasswordResetConfirmDto request = new PasswordResetConfirmDto("invalidToken", "new_password123");
+        PasswordResetConfirmDto request = new PasswordResetConfirmDto("invalidToken",
+            "new_password123");
 
         doThrow(new CustomException(ErrorCode.INVALID_TOKEN))
             .when(userService).confirmPasswordReset(any(PasswordResetConfirmDto.class));

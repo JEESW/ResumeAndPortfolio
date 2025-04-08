@@ -36,13 +36,13 @@ public class RefreshTokenService {
     }
 
     // OAuth2 일회성 코드 저장
-    public void saveOneTimeCode(String code, String email, long durationInSeconds) {
+    public void saveOneTimeCode(String code, String username, long durationSeconds) {
         redisTemplate.opsForValue()
-            .set("one-time-code:" + code, email, durationInSeconds, TimeUnit.SECONDS);
+            .set("one-time-code:" + code, username, durationSeconds, TimeUnit.SECONDS);
     }
 
     // OAuth2 일회성 코드 조회
-    public String getEmailByOneTimeCode(String code) {
+    public String getUsernameByOneTimeCode(String code) {
         return redisTemplate.opsForValue().get("one-time-code:" + code);
     }
 
