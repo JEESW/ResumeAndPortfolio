@@ -21,7 +21,7 @@ public class MailUtil {
     private String fromAddress;
 
     @Value("${application.server.url}")
-    private String serverUrl;
+    private String sendingUrl;
 
     public MailUtil(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -30,7 +30,7 @@ public class MailUtil {
     // 회원 가입 시 인증 메일 보내는 메서드
     public void sendVerificationMail(String toEmail, String token) {
         String subject = "[ResumeAndPortfolio] 이메일 인증";
-        String verificationLink = serverUrl + "/api/users/verify?token=" + token;
+        String verificationLink = sendingUrl + "/signup?token=" + token;
         String text =
             "저희 서비스에 회원가입 해주셔서 감사합니다! 다음 이메일 인증 링크를 눌러주세요!:\n"
                 + verificationLink;
@@ -47,7 +47,7 @@ public class MailUtil {
     // 비밀번호 재설정 시 인증 메일 보내는 메서드
     public void sendPasswordResetMail(String toEmail, String token) {
         String subject = "[ResumeAndPortfolio] 비밀번호 재설정";
-        String resetLink = serverUrl + "/api/users/reset-password?token=" + token;
+        String resetLink = sendingUrl + "/reset-password?token=" + token;
         String text = "비밀번호 재설정을 요청하셨습니다. 아래 링크를 클릭하여 새로운 비밀번호를 설정하세요:\n" + resetLink;
 
         SimpleMailMessage message = new SimpleMailMessage();

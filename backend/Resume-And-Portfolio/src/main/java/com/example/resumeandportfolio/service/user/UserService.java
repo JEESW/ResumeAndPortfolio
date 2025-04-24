@@ -4,6 +4,7 @@ import com.example.resumeandportfolio.exception.CustomException;
 import com.example.resumeandportfolio.exception.ErrorCode;
 import com.example.resumeandportfolio.model.dto.user.PasswordResetConfirmDto;
 import com.example.resumeandportfolio.model.dto.user.PasswordResetRequestDto;
+import com.example.resumeandportfolio.model.dto.user.VerificationTokenResponse;
 import com.example.resumeandportfolio.model.dto.user.UserLoadInfoDto;
 import com.example.resumeandportfolio.model.dto.user.UserLoginResponse;
 import com.example.resumeandportfolio.model.dto.user.UserRegisterRequest;
@@ -126,6 +127,27 @@ public class UserService {
         }
 
         mailUtil.sendVerificationMail(email, token);
+    }
+
+    // 이메일 인증 토큰 유효성 검증 로직
+    public VerificationTokenResponse verifyToken(String token) {
+        ValueOperations<String, String> valueOps = redisTemplate.opsForValue();
+        String tokenData = valueOps.get("verification:token:" + token);
+
+        if (tokenData == null) {
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
+
+        try {
+            VerificationTokenDto verificationToken = objectMapper.readValue(tokenData,
+                VerificationTokenDto.class);
+            if (verificationToken.isExpired()) {
+                throw new CustomException(ErrorCode.TOKEN_EXPIRED);
+            }
+            return new VerificationTokenResponse(verificationToken.email(), true);
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.REDIS_PARSE_ERROR);
+        }
     }
 
     // 회원 가입 완료 로직

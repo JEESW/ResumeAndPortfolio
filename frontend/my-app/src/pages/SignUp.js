@@ -1,210 +1,215 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import axios from "axios";
+import {useNavigate} from "react-router-dom";
 
 const SignUp = () => {
-  const [step, setStep] = useState(1); // 단계 관리: 1-이메일 입력, 2-토큰 확인, 3-회원가입 완료
-  const [email, setEmail] = useState("");
-  const [emailMessage, setEmailMessage] = useState("");
-  const [emailValid, setEmailValid] = useState(null);
-
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
   const [token, setToken] = useState("");
-  const [tokenMessage, setTokenMessage] = useState("");
-  const [tokenValid, setTokenValid] = useState(null);
-
+  const [email, setEmail] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordMatch, setPasswordMatch] = useState(null);
-
   const [nickname, setNickname] = useState("");
+  const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState({});
 
-  // 이메일 유효성 검사 함수
-  const isEmailValid = (email) => {
-    const emailRegex =
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
+  // URL에 토큰이 있을 경우 → 자동으로 verify-token 호출
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("token");
+    if (urlToken) {
+      axios
+      .get(
+          "https://www.jsw-resumeandportfolio.com/api/users/register/verify-token",
+          {params: {token: urlToken}})
+      .then((res) => {
+        setToken(urlToken);
+        setEmail(res.data.email);
+        setStep(2);
+      })
+      .catch(() => {
+        setMessage("이메일 인증 링크가 만료되었거나 유효하지 않습니다.");
+      });
+    }
+  }, []);
+
+  // 인증 이메일 처음 보내기
+  const handleEmailInitiate = async () => {
+    try {
+      await axios.post(
+          "https://www.jsw-resumeandportfolio.com/api/users/register/initiate",
+          {
+            email,
+            password: "temporary123",
+            confirmPassword: "temporary123",
+            nickname: "temporaryUser",
+          });
+      setMessage("인증 이메일이 발송되었습니다. 이메일을 확인해주세요.");
+      setEmailSent(true);
+    } catch (err) {
+      setMessage(err.response?.data?.message || "이메일 인증 요청 중 오류가 발생했습니다.");
+    }
   };
 
-  // 이메일 중복 확인 및 인증 요청
-  const handleEmailCheck = async () => {
-    if (!isEmailValid(email)) {
-      setEmailValid(false);
-      setEmailMessage("올바른 이메일 형식을 입력하세요.");
+  // 인증 메일 재전송
+  const handleResendEmail = async () => {
+    try {
+      await axios.post(
+          "https://www.jsw-resumeandportfolio.com/api/users/register/resend",
+          null, {
+            params: {email},
+          });
+      setMessage("새로운 인증 이메일이 발송되었습니다.");
+    } catch (err) {
+      setMessage(err.response?.data?.message || "재전송 중 오류가 발생했습니다.");
+    }
+  }
+
+  // 유효성 검사 함수
+  const validateInputs = () => {
+    const newErrors = {};
+
+    // 이메일
+    if (!email) {
+      newErrors.email = "이메일은 필수 항목입니다.";
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(
+        email)) {
+      newErrors.email = "올바른 이메일 형식이 아닙니다.";
+    }
+
+    // 비밀번호
+    if (!password) {
+      newErrors.password = "비밀번호는 필수 항목입니다.";
+    } else if (password.length < 6) {
+      newErrors.password = "비밀번호는 최소 6자 이상이어야 합니다.";
+    }
+
+    // 비밀번호 확인
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "비밀번호 확인은 필수 항목입니다.";
+    } else if (confirmPassword.length < 6) {
+      newErrors.confirmPassword = "비밀번호는 최소 6자 이상이어야 합니다.";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "비밀번호가 일치하지 않습니다.";
+    }
+
+    // 닉네임
+    if (!nickname) {
+      newErrors.nickname = "닉네임은 필수 항목입니다.";
+    } else if (nickname.length > 15) {
+      newErrors.nickname = "닉네임은 최대 15자까지 가능합니다.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // 회원가입 완료 요청
+  const handleCompleteRegistration = async () => {
+    if (!validateInputs()) {
       return;
     }
 
-    try {
-      // 백엔드의 UserRegisterRequest 요구사항을 맞추기 위해 임의 값 포함
-      await axios.post("https://www.jsw-resumeandportfolio.com/api/users/register/initiate", {
-        email,
-        password: "temporary123", // 임시 비밀번호
-        confirmPassword: "temporary123", // 임시 비밀번호 확인
-        nickname: "temporaryUser" // 임시 닉네임
-      });
-      setEmailValid(true);
-      setEmailMessage("인증 이메일이 발송되었습니다. 이메일을 확인하세요!");
-      setStep(2);
-    } catch (err) {
-      setEmailValid(false);
-      setEmailMessage(err.response?.data?.message || "오류가 발생했습니다.");
-    }
-  };
-
-  // 토큰 확인
-  const handleTokenCheck = async () => {
     try {
       await axios.post(
           "https://www.jsw-resumeandportfolio.com/api/users/register/complete",
-          { token }
-      );
-      setTokenValid(true);
-      setTokenMessage("이메일 인증이 완료되었습니다.");
+          null, {
+            params: {token, password, nickname},
+          });
+      setMessage("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...");
       setStep(3);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setTokenValid(false);
-      setTokenMessage(err.response?.data?.message || "인증 토큰이 유효하지 않습니다.");
-    }
-  };
-
-  // 비밀번호 일치 여부 확인
-  const handlePasswordChange = (value) => {
-    setPassword(value);
-    setPasswordMatch(value === confirmPassword);
-  };
-
-  const handleConfirmPasswordChange = (value) => {
-    setConfirmPassword(value);
-    setPasswordMatch(password === value);
-  };
-
-  // 회원가입 요청
-  const handleSignUp = async () => {
-    if (!passwordMatch || !nickname) {
-      alert("모든 입력이 올바른지 확인해주세요.");
-      return;
-    }
-
-    try {
-      await axios.post("https://www.jsw-resumeandportfolio.com/api/users/register/complete", {
-        token,
-        password,
-        nickname,
-      });
-      alert("회원가입이 완료되었습니다!");
-    } catch (err) {
-      alert(err.response?.data?.message || "회원가입 중 오류가 발생했습니다.");
+      setMessage(err.response?.data?.message || "회원가입 중 오류가 발생했습니다.");
     }
   };
 
   return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+      <div
+          className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">회원가입</h2>
+
+          {message && <p className="text-sm mb-4 text-red-600">{message}</p>}
+
+          {/* STEP 1: 이메일 입력 */}
           {step === 1 && (
               <>
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">회원 가입</h2>
-                <div>
-                  <label htmlFor="email" className="block text-gray-700">Email</label>
-                  <input
-                      type="email"
-                      id="email"
-                      className="w-full px-4 py-2 border rounded-lg"
-                      placeholder="이메일을 입력해 주세요."
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <button
-                      type="button"
-                      onClick={handleEmailCheck}
-                      className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                  >
-                    인증 요청
-                  </button>
-                  {emailMessage && (
-                      <p className={`text-sm ${emailValid ? "text-green-600" : "text-red-600"}`}>
-                        {emailMessage}
-                      </p>
-                  )}
-                </div>
+                <label className="block text-gray-700 mb-1">이메일</label>
+                <input
+                    type="email"
+                    className="w-full px-4 py-2 border rounded-lg"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="이메일을 입력하세요"
+                />
+                {!emailSent ? (
+                    <button
+                        onClick={handleEmailInitiate}
+                        className="mt-2 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                    >
+                      인증 이메일 보내기
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleResendEmail}
+                        className="mt-2 w-full bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400"
+                    >
+                      인증 메일 재전송
+                    </button>
+                )}
               </>
           )}
 
+          {/* STEP 2: 비밀번호 + 닉네임 입력 */}
           {step === 2 && (
               <>
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">이메일 인증</h2>
-                <div>
-                  <label htmlFor="token" className="block text-gray-700">인증 토큰</label>
-                  <input
-                      type="text"
-                      id="token"
-                      className="w-full px-4 py-2 border rounded-lg"
-                      placeholder="이메일로 받은 인증 토큰을 입력하세요."
-                      value={token}
-                      onChange={(e) => setToken(e.target.value)}
-                  />
-                  <button
-                      type="button"
-                      onClick={handleTokenCheck}
-                      className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                  >
-                    인증 확인
-                  </button>
-                  {tokenMessage && (
-                      <p className={`text-sm ${tokenValid ? "text-green-600" : "text-red-600"}`}>
-                        {tokenMessage}
-                      </p>
-                  )}
-                </div>
+                <p className="text-gray-700 mb-4">이메일 인증이 완료되었습니다.</p>
+                <label className="block text-gray-700 mb-1 mt-4">비밀번호</label>
+                <input
+                    type="password"
+                    className="w-full px-4 py-2 border rounded-lg"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="비밀번호"
+                />
+                {errors.password && <p
+                    className="text-red-600 text-sm mt-1">{errors.password}</p>}
+                <label className="block text-gray-700 mb-1 mt-4">비밀번호 확인</label>
+                <input
+                    type="password"
+                    className="w-full px-4 py-2 border rounded-lg"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="비밀번호 확인"
+                />
+                {errors.confirmPassword && <p
+                    className="text-red-600 text-sm mt-1">{errors.confirmPassword}</p>}
+                <label className="block text-gray-700 mb-1 mt-4">닉네임</label>
+                <input
+                    type="text"
+                    className="w-full px-4 py-2 border rounded-lg"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    placeholder="닉네임"
+                />
+                {errors.nickname && <p
+                    className="text-red-600 text-sm mt-1">{errors.nickname}</p>}
+                <button
+                    onClick={handleCompleteRegistration}
+                    className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+                >
+                  회원가입 완료
+                </button>
               </>
           )}
 
+          {/* STEP 3: 완료 메시지 */}
           {step === 3 && (
-              <>
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">회원 가입 완료</h2>
-                <div>
-                  <label htmlFor="password" className="block text-gray-700">Password</label>
-                  <input
-                      type="password"
-                      id="password"
-                      className="w-full px-4 py-2 border rounded-lg"
-                      placeholder="비밀번호를 입력하세요."
-                      value={password}
-                      onChange={(e) => handlePasswordChange(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-gray-700">Re-enter Password</label>
-                  <input
-                      type="password"
-                      id="confirmPassword"
-                      className="w-full px-4 py-2 border rounded-lg"
-                      placeholder="비밀번호를 다시 입력하세요."
-                      value={confirmPassword}
-                      onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-                  />
-                  {passwordMatch !== null && (
-                      <p className={`text-sm ${passwordMatch ? "text-green-600" : "text-red-600"}`}>
-                        {passwordMatch ? "비밀번호가 일치합니다." : "비밀번호가 일치하지 않습니다."}
-                      </p>
-                  )}
-                </div>
-                <div>
-                  <label htmlFor="nickname" className="block text-gray-700">Nickname</label>
-                  <input
-                      type="text"
-                      id="nickname"
-                      className="w-full px-4 py-2 border rounded-lg"
-                      placeholder="닉네임을 입력하세요."
-                      value={nickname}
-                      onChange={(e) => setNickname(e.target.value)}
-                  />
-                </div>
-                <button
-                    type="button"
-                    onClick={handleSignUp}
-                    className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-                >
-                  회원가입
-                </button>
-              </>
+              <p className="text-green-700 font-semibold text-center">
+                회원가입이 완료되었습니다! 로그인 페이지로 이동 중...
+              </p>
           )}
         </div>
       </div>
