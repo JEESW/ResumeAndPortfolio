@@ -72,8 +72,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/api/users/reissue", "/api/users/login",
-                    "/api/users/register/**",
-                    "/api/users/oauth2/**", "/api/users/verify/**", "/api/users/reset-password/**")
+                    "/api/users/register/**", "/api/users/oauth2/**")
                 .permitAll()
                 .anyRequest().authenticated()
             )
