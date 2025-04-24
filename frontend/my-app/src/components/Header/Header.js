@@ -13,36 +13,19 @@ const Header = () => {
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token) {
-      validateToken(token); // Access Token 검증 및 필요 시 재발급
+      validateToken(token); // Access Token 검증
     }
   }, [isLoggedIn]); // isLoggedIn이 변경될 때마다 실행됨
 
-  // Access Token 검증 및 재발급 처리
+  // Access Token 검증
   const validateToken = async (token) => {
     try {
       await fetchUserInfo(token); // 사용자 정보 조회
     } catch (error) {
-      if (error.response && error.response.status === 401) {
-        // Access Token 재발급
-        try {
-          const reissueResponse = await axios.post(
-              "https://www.jsw-resumeandportfolio.com/api/users/reissue"
-          );
-          let newAccessToken = reissueResponse.headers["authorization"];
-
-          if (newAccessToken && !newAccessToken.startsWith("Bearer ")) {
-            newAccessToken = `Bearer ${newAccessToken}`;
-          }
-
-          localStorage.setItem("accessToken", newAccessToken); // 새로운 Access Token 저장
-          await fetchUserInfo(newAccessToken); // 새로운 토큰으로 사용자 정보 재조회
-        } catch (reissueError) {
-          console.error("Token reissue failed:", reissueError);
-          localStorage.removeItem("accessToken");
-          alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
-          navigate("/login");
-        }
-      }
+      console.error("Token reissue failed:", error);
+      localStorage.removeItem("accessToken");
+      alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+      navigate("/login");
     }
   };
 

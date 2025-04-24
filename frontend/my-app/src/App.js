@@ -9,6 +9,7 @@ import Faq from "./pages/Faq";
 import Login from "./pages/Login"
 import OAuthRedirectHandler from "./components/Social-Login/OAuthRedirectHandler";
 import SignUp from "./pages/SignUp";
+import UpdateProfile from "./pages/UpdateProfile";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/oauth2/callback" element={<OAuthRedirectHandler />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/update-profile" element={<UpdateProfile />} />
           </Routes>
         </main>
         <Footer />
