@@ -28,7 +28,7 @@ function OAuthRedirectHandler() {
         const accessToken = authHeader.replace("Bearer ", "");
         localStorage.setItem("accessToken", accessToken);
         alert("로그인 성공!");
-        navigate("/");
+        window.location.href = "/";
       })
       .catch((error) => {
         console.error("Failed to get token:", error);
