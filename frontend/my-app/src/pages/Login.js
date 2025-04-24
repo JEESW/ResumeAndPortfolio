@@ -66,6 +66,14 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
               />
+              <div className="text-right mt-1">
+                <span
+                    className="text-sm text-blue-600 hover:underline cursor-pointer"
+                    onClick={() => navigate("/reset-password")}
+                >
+                  Forgot your password?
+                </span>
+              </div>
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <button
