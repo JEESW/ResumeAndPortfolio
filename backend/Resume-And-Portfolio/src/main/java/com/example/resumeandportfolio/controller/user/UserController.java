@@ -154,6 +154,14 @@ public class UserController {
             .body("비밀번호 재설정 이메일이 발송되었습니다.");
     }
 
+    // 비밀번호 재설정 토큰 검증 API
+    @GetMapping("/reset-password/verify-token")
+    public ResponseEntity<VerificationTokenResponse> verifyResetPasswordToken(
+        @RequestParam String token) {
+        VerificationTokenResponse response = userService.verifyResetPasswordToken(token);
+        return ResponseEntity.ok(response);
+    }
+
     // 비밀번호 재설정 확인 API
     @PostMapping("/reset-password/confirm")
     public ResponseEntity<String> confirmPasswordReset(

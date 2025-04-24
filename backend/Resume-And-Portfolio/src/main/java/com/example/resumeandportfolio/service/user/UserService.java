@@ -134,20 +134,7 @@ public class UserService {
         ValueOperations<String, String> valueOps = redisTemplate.opsForValue();
         String tokenData = valueOps.get("verification:token:" + token);
 
-        if (tokenData == null) {
-            throw new CustomException(ErrorCode.INVALID_TOKEN);
-        }
-
-        try {
-            VerificationTokenDto verificationToken = objectMapper.readValue(tokenData,
-                VerificationTokenDto.class);
-            if (verificationToken.isExpired()) {
-                throw new CustomException(ErrorCode.TOKEN_EXPIRED);
-            }
-            return new VerificationTokenResponse(verificationToken.email(), true);
-        } catch (JsonProcessingException e) {
-            throw new CustomException(ErrorCode.REDIS_PARSE_ERROR);
-        }
+        return getVerificationTokenResponse(tokenData);
     }
 
     // 회원 가입 완료 로직
@@ -231,7 +218,7 @@ public class UserService {
         user.delete();
     }
 
-    // 비밀번호 재설정 요청 로직
+    // 비밀번호 재설정 메일 인증 요청 로직
     @Transactional
     public void requestPasswordReset(PasswordResetRequestDto request) {
         User user = userRepository.findByEmailAndDeletedAtIsNull(request.email())
@@ -252,6 +239,14 @@ public class UserService {
         }
 
         mailUtil.sendPasswordResetMail(user.getEmail(), token);
+    }
+
+    // 비밀번호 재설정 토큰 유효성 검증 로직
+    public VerificationTokenResponse verifyResetPasswordToken(String token) {
+        ValueOperations<String, String> valueOps = redisTemplate.opsForValue();
+        String tokenData = valueOps.get("password-reset:token:" + token);
+
+        return getVerificationTokenResponse(tokenData);
     }
 
     // 비밀번호 재설정 확인 로직
@@ -280,6 +275,24 @@ public class UserService {
             throw new CustomException(ErrorCode.REDIS_PARSE_ERROR);
         } finally {
             redisTemplate.delete(redisKey);
+        }
+    }
+
+    // 토큰 유효성 검증 로직
+    private VerificationTokenResponse getVerificationTokenResponse(String tokenData) {
+        if (tokenData == null) {
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
+
+        try {
+            VerificationTokenDto verificationToken = objectMapper.readValue(tokenData,
+                VerificationTokenDto.class);
+            if (verificationToken.isExpired()) {
+                throw new CustomException(ErrorCode.TOKEN_EXPIRED);
+            }
+            return new VerificationTokenResponse(verificationToken.email(), true);
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.REDIS_PARSE_ERROR);
         }
     }
 }
