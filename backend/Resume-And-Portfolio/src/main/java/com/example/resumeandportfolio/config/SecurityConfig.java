@@ -7,7 +7,6 @@ import com.example.resumeandportfolio.service.user.oauth.CustomOAuth2UserService
 import com.example.resumeandportfolio.service.user.RefreshTokenService;
 import com.example.resumeandportfolio.util.jwt.JwtUtil;
 import com.example.resumeandportfolio.util.oauth.OAuth2AuthenticationSuccessHandler;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -25,6 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Security Configuration
@@ -48,28 +49,13 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(new CorsConfigurationSource() {
-                @Override
-                public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-                    CorsConfiguration configuration = new CorsConfiguration();
-
-                    configuration.setAllowedOrigins(
-                        Collections.singletonList("https://www.jsw-resumeandportfolio.com"));
-                    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
-                    configuration.setAllowCredentials(true);
-                    configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Set-Cookie"));
-                    configuration.setMaxAge(3600L);
-                    configuration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
-
-                    return configuration;
-                }
-            }))
+            .cors(Customizer.withDefaults())
             .requiresChannel(channel -> channel
                 .anyRequest()
                 .requiresSecure()
             )
-            .formLogin(formLogin -> formLogin.disable())
-            .httpBasic(httpBasic -> httpBasic.disable())
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
             .oauth2Login(oauth2 -> oauth2
                 .authorizationEndpoint(authorization ->
                     authorization.baseUri("/api/users/oauth2/authorization")
@@ -85,8 +71,9 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/api/users/reissue", "/api/users/login", "/api/users/register/**",
-                    "/api/users/oauth2/**")
+                .requestMatchers("/", "/api/users/reissue", "/api/users/login",
+                    "/api/users/register/**",
+                    "/api/users/oauth2/**", "/api/users/verify/**", "/api/users/reset-password/**")
                 .permitAll()
                 .anyRequest().authenticated()
             )
@@ -101,6 +88,24 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
+    }
+
+    // CORS 설정
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(
+            Collections.singletonList("https://www.jsw-resumeandportfolio.com"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedHeaders(
+            Arrays.asList("Authorization", "Content-Type", "Set-Cookie"));
+        configuration.setMaxAge(3600L);
+        configuration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     // 패스워드 인코더
