@@ -4,6 +4,7 @@ import com.example.resumeandportfolio.exception.CustomException;
 import com.example.resumeandportfolio.exception.ErrorCode;
 import com.example.resumeandportfolio.model.dto.user.PasswordResetConfirmDto;
 import com.example.resumeandportfolio.model.dto.user.PasswordResetRequestDto;
+import com.example.resumeandportfolio.model.dto.user.VerificationTokenResponse;
 import com.example.resumeandportfolio.model.dto.user.UserLoadInfoDto;
 import com.example.resumeandportfolio.model.dto.user.UserLoginRequest;
 import com.example.resumeandportfolio.model.dto.user.UserLoginResponse;
@@ -91,6 +92,13 @@ public class UserController {
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_JSON)
             .body("새로운 인증 이메일이 발송되었습니다.");
+    }
+
+    // 이메일 인증 토큰 유효성 검증 API
+    @GetMapping("/register/verify-token")
+    public ResponseEntity<VerificationTokenResponse> verifyToken(@RequestParam String token) {
+        VerificationTokenResponse response = userService.verifyToken(token);
+        return ResponseEntity.ok(response);
     }
 
     // 회원 가입 완료 API
